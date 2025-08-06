@@ -13,8 +13,12 @@
       <div style="margin-top: 10px">lbwnb!!!在这里你可以学习如何使用java，如何搭建网站，并于java之母交谈</div>
       <div style="margin-top: 10px">最大同性交友网站欢迎您！！！</div>
     </div>
-    <div style="width: 400px;text-align: center;background-color: white">
-      <router-view></router-view>
+    <div style="width: 400px;text-align: center;background-color: white;z-index: 1">
+      <router-view v-slot="{ Component}">
+        <transition name="el-fade-in-linear">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </div>
   </div>
 </template>

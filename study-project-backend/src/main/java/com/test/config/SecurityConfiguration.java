@@ -22,10 +22,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 
 @Configuration
@@ -35,6 +38,8 @@ public class SecurityConfiguration {
     @Resource
     AuthorizeService authorizeService;
 
+    @Resource
+    DataSource dataSource;
 
 
 
@@ -54,8 +59,11 @@ public class SecurityConfiguration {
                         .logoutUrl("/api/auth/logout")
                         .logoutSuccessHandler(this::onAuthenticationSuccess)
                 )
-                .csrf(AbstractHttpConfigurer::disable
-                )
+                .rememberMe( httpSecurityRememberMeConfigurer -> httpSecurityRememberMeConfigurer
+                        .rememberMeParameter("remember")
+                        .tokenRepository(this.tokenRepository())
+                        .tokenValiditySeconds(3600 *24 * 7))
+                .csrf(AbstractHttpConfigurer::disable)
                 .cors( cors -> cors
                         .configurationSource(this.corsConfigurationSource())
 
@@ -75,6 +83,13 @@ public class SecurityConfiguration {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**",cors);
         return source;
+    }
+    @Bean
+    public PersistentTokenRepository tokenRepository() {
+        JdbcTokenRepositoryImpl jdbcTokenRepository = new JdbcTokenRepositoryImpl();
+        jdbcTokenRepository.setDataSource(dataSource);
+        jdbcTokenRepository.setCreateTableOnStartup(false);
+        return jdbcTokenRepository;
     }
 
 
@@ -100,7 +115,6 @@ public class SecurityConfiguration {
         else if (request.getRequestURI().endsWith("/logout")) {
             response.getWriter().write(JSONObject.toJSONString(RestBean.success("退出登录成功！")));
         }
-
     }
 
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
