@@ -15,7 +15,7 @@
     </div>
     <div style="width: 400px;text-align: center;background-color: white;z-index: 1">
       <router-view v-slot="{ Component}">
-        <transition name="el-fade-in-linear">
+        <transition name="el-fade-in-linear" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
